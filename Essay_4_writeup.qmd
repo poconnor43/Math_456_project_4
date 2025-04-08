@@ -1,0 +1,103 @@
+---
+title: "Essay_4"
+format: pdf
+editor: visual
+---
+
+# Wine Quality Prediction with KNN
+
+### Authors: Preston O'Connor
+
+### Date: 4/14/2025
+
+## Introduction
+
+```{r}
+#libraries given in Step 1 of the slides
+# install.packages("class") # For KNN
+# install.packages("ggplot2") # For visualization
+# library(class)
+# library(ggplot2)
+
+#loading the data set
+```
+
+## Data Description
+
+### Check for Missing values
+
+```{r}
+
+```
+
+### Box plots and Outliers
+
+```{r}
+
+
+
+```
+
+### Normalize Data
+
+```{r}
+# normalize <- function(x) { (x - min(x)) / (max(x) - min(x)) }
+# 
+# iris_norm <- as.data.frame(lapply(iris_clean[, 1:4], normalize))
+```
+
+## Analysis
+
+### Get Optimized K
+
+```{r}
+#found in step 4 of the knn in class Lecture slides for KNN
+```
+
+### Train and Test Split
+
+```{r}
+#found in step 2 of the knn in class Lecture slides for KNN
+```
+
+### KNN Implementation
+
+```{r}
+#found in step 3 of the knn in class Lecture slides for KNN
+```
+
+## Model Evaluation
+
+### The Accuracy of the Model
+
+```{r}
+# accuracy <- sum(knn_final == test_labels) / length(test_labels)
+# cat("Accuracy:", accuracy, "\n")
+```
+
+### The Confusion Matrix
+
+```{r}
+# conf_matrix <- confusionMatrix(knn_final, test_labels)
+# print(conf_matrix)
+
+```
+
+### Evaluate the ROC curve and ACU
+
+```{r}
+# library(pROC)
+# roc_curve <- roc(test_labels, as.numeric(knn_final))
+# auc_value <- auc(roc_curve)
+# cat("AUC:", auc_value, "\n")
+```
+
+## Conclusion & Summary
+
+## Sources
+
+-   Source 1
+
+-   Source 2
+
+-   Kaggle data set
