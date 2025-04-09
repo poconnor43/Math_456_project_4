@@ -15,55 +15,207 @@ editor: visual
 ```{r}
 #libraries given in Step 1 of the slides
 # install.packages("class") # For KNN
-# install.packages("ggplot2") # For visualization
-# library(class)
-# library(ggplot2)
+# install.packages("tidyverse") # For visualization
+# install.packages("corrplot") # correlation matrix visualization
+# install.packages("ggplot2")# used to view correltation matrix
+# install.packages("leaps") #for best subset sum
+library(class) # for KNN Implementation 
+library(tidyverse) # for visualization
+library(corrplot) 
+library(ggplot2)
+library(caret) # for KNN
+library(leaps)
 
 #loading the data set
+data <- read.csv("winequality-red.csv")
+#names(wine)
+summary(data)
 ```
 
 ## Data Description
 
-### Check for Missing values
+### Data source
+
+The dataset used in this project is the Red Wine Quality dataset from the UCI Machine Learning Repository, also available on Kaggle (<https://www.kaggle.com/datasets/uciml/red-wine-quality-cortez-et-al-2009>). This dataset was compiled by Paulo Cortez et al. (2009) and is related to red Vinho Verde wine samples from the north of Portugal.
+
+### Data structure and Variables
+
+The dataset contains 1599 observations (rows) and 12 variables (11 numeric input variables and 1 output variable: quality). The variables represent physicochemical attributes of the wine samples:
+
+-   **fixed acidity**: Refers primarily to tartaric acid, which is one of the main acids found naturally in grapes.
+
+-   **volatile acidity**: Measures the amount of acetic acid (vinegar) in the wine.
+
+-   **citric acid**: A natural acid found in small quantities in wine that can add freshness and flavor.
+
+-   **residual sugar**: Represents the amount of sugar remaining after fermentation.
+
+-   **chlorides**: Indicates the amount of salt in the wine, which can affect the taste and preservation.
+
+-   **free sulfur dioxide**: Refers to the part of sulfur dioxide (SO₂) that is not bound to other molecules and is available to act as an antioxidant and antimicrobial agent.
+
+-   **total sulfur dioxide**: Includes both free and bound forms of SO₂.
+
+-   **density**: The density of wine, which is influenced by the sugar and alcohol content.
+
+-   **pH**: Indicates how acidic or basic the wine is.
+
+-   **sulphates**: Sulfate compounds can contribute to the wine’s flavor and preservation.
+
+-   **alcohol**: The percentage of ethanol by volume in the wine.
+
+-   **quality**: This is the response variable, a sensory score assigned by professional tasters ranging from 0 to 10. It reflects the overall quality of the wine sample based on taste, aroma, and balance.
+
+### Data cleaning
 
 ```{r}
+# Boxplots to detect outliers
+par(mfrow = c(2, 3))
+for (i in 1:6) {
+  boxplot(data[[i]], main = names(data)[i])
+}
 
+# Plot remaining 6 variables
+par(mfrow = c(2, 3))
+for (i in 7:12) {
+  boxplot(data[[i]], main = names(data)[i])
+}
+
+par(mfrow = c(1, 1))  # Reset
+
+# Function to remove outliers beyond 1.5 * IQR
+remove_outliers_IQR <- function(df, column) {
+  # df <- df %>% filter(!is.na(df[[column]]))  # Remove missing data
+  df <- df %>% filter(!is.na(!!sym(column))) 
+  Q1 <- quantile(df[[column]], 0.25, na.rm = T)
+  Q3 <- quantile(df[[column]], 0.75, na.rm = T)
+  IQR <- Q3 - Q1
+  lower_bound <- Q1 - 1.5 * IQR
+  upper_bound <- Q3 + 1.5 * IQR
+  df %>% filter(df[[column]] >= lower_bound & df[[column]] <= upper_bound)
+}
+
+# Remove outliers for all relevant columns
+data_cleaned <- data
+columns <- c("fixed.acidity", "volatile.acidity", "citric.acid", 
+             "residual.sugar", "chlorides", "free.sulfur.dioxide", 
+             "total.sulfur.dioxide", "density", "pH", 
+             "sulphates", "alcohol")
+
+data_cleaned <- data
+
+for (col in columns) {
+  data_cleaned <- remove_outliers_IQR(data_cleaned, col)
+}
+
+# Summary of the cleaned data
+summary(data_cleaned)
+
+# New size of the cleaned dataset
+nrow(data_cleaned)
 ```
 
-### Box plots and Outliers
-
-```{r}
-
-
-
-```
+The dataset contains 1135 observations (rows) after removing outliers.
 
 ### Normalize Data
 
 ```{r}
-# normalize <- function(x) { (x - min(x)) / (max(x) - min(x)) }
-# 
-# iris_norm <- as.data.frame(lapply(iris_clean[, 1:4], normalize))
+normalize <- function(x) { (x - min(x)) / (max(x) - min(x)) }
+ 
+data_norm <- as.data.frame(lapply(data_cleaned[, 1:11], normalize))
+head(data_norm)
+```
+
+### Data visualization
+
+```{r}
+# Reshape data to long format
+wine_long <- pivot_longer(data_norm, cols = 1:11, names_to = "variable", values_to = "value")
+
+# Create faceted histogram plot
+ggplot(wine_long, aes(x = value)) +
+  geom_histogram(bins = 20, fill = "steelblue", color = "white") +
+  facet_wrap(~variable, scales = "free", ncol = 3) +
+  theme_minimal() +
+  labs(title = "Histograms of Wine Features", x = "", y = "Count")
+```
+
+### Correlation matrix
+
+```{r}
+# Compute correlation matrix for numeric input variables
+cor_matrix <- cor(data_norm[, 1:11])  # Exclude 'quality' if you're only interested in inputs
+print(round(cor_matrix, 2))      # Round for readability
+
+corrplot(cor_matrix, method = "color", type = "upper",
+         tl.col = "black", tl.srt = 45,
+         addCoef.col = "black", number.cex = 0.7,
+         col = colorRampPalette(c("blue", "white", "red"))(200))
 ```
 
 ## Analysis
 
-### Get Optimized K
+### Best Subset 
 
 ```{r}
-#found in step 4 of the knn in class Lecture slides for KNN
+best_sub <- regsubsets(quality ~ ., data = data_norm, nvmax = 11)
+summary(best_sub)
 ```
 
-### Train and Test Split
+## Analysis
+
+### Train and Test Split with the optimized K
 
 ```{r}
-#found in step 2 of the knn in class Lecture slides for KNN
+# First Implement the Seed and split the Training and Testing Data
+set.seed(1)
+#selected_cols <- c(2,10,11) # this received 61.25% with k =20
+selected_cols <- c(2,3,7, 10,11) # this received 61.87% with k = 31
+index <- sample(1:nrow(wine_filtered), 0.8 * nrow(wine_filtered))
+
+train_data <- wine_filtered[index, selected_cols]   # Features: columns 1 to 11
+test_data <- wine_filtered[-index, selected_cols]
+
+train_labels <- wine_filtered[index, 12]   # Target: column 12
+test_labels <- wine_filtered[-index, 12]
+
+# Step 2: (Optional) Convert target to factor if doing classification
+# The numbers are treated as categorical not to calculate the average from
+train_labels <- as.factor(train_labels)
+test_labels <- as.factor(test_labels)
+
+# Step 3: Train KNN with k = 2-60
+accuracy_list <- c()
+
+for (k in 2:60) {
+  knn_pred <- knn(train = train_data, test = test_data, cl = train_labels, k = k)
+  acc <- sum(knn_pred == test_labels) / length(test_labels)
+  accuracy_list <- c(accuracy_list, acc)
+}
+
+# Find the best k
+best_k <- which.max(accuracy_list) + 1  # +1 because sequence started at k = 2
+best_acc <- max(accuracy_list)
+
+cat("The Best k:", best_k, "\n")
+cat("The Best Accuracy:", round(best_acc, 4), "\n")
+
+# Optional: Final model with best k
+final_knn <- knn(train = train_data, test = test_data, cl = train_labels, k = best_k)
+
 ```
 
-### KNN Implementation
+Get the optimize K
 
 ```{r}
-#found in step 3 of the knn in class Lecture slides for KNN
+k_values <- 1:60
+accuracies <- sapply(k_values, function(k) {
+pred <- knn(train_data, test_data, cl = train_labels, k = k)
+mean(pred == test_labels)
+})
+# Plot accuracy vs. K
+plot(k_values, accuracies, type = "b", col = "blue", pch = 19,
+xlab = "K", ylab = "Accuracy", main = "Optimal K Selection")
 ```
 
 ## Model Evaluation
