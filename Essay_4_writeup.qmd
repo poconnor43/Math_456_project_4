@@ -19,12 +19,14 @@ editor: visual
 # install.packages("corrplot") # correlation matrix visualization
 # install.packages("ggplot2")# used to view correltation matrix
 # install.packages("leaps") #for best subset sum
+# install.packages("pROC") # for the ROC analaysys
 library(class) # for KNN Implementation 
 library(tidyverse) # for visualization
 library(corrplot) 
 library(ggplot2)
 library(caret) # for KNN
 library(leaps)
+library(pROC)
 
 #loading the data set
 data <- read.csv("winequality-red.csv")
@@ -85,7 +87,7 @@ par(mfrow = c(1, 1))  # Reset
 
 # Function to remove outliers beyond 1.5 * IQR
 remove_outliers_IQR <- function(df, column) {
-  # df <- df %>% filter(!is.na(df[[column]]))  # Remove missing data
+  #df <- df %>% filter(!is.na(df[[column]]))  # Remove missing data
   df <- df %>% filter(!is.na(!!sym(column))) 
   Q1 <- quantile(df[[column]], 0.25, na.rm = T)
   Q3 <- quantile(df[[column]], 0.75, na.rm = T)
@@ -158,8 +160,17 @@ corrplot(cor_matrix, method = "color", type = "upper",
 ### Best Subset 
 
 ```{r}
-best_sub <- regsubsets(quality ~ ., data = data_norm, nvmax = 11)
-summary(best_sub)
+data_combined <- cbind(data_norm, quality = data_cleaned$quality)
+ nrow(data_norm)
+ 
+# due to 2 instances of the value of qaulity 3 remove the data
+data_combined <- data_combined %>% 
+  filter(quality !=3)
+ # remove the data with the two points of classification as three
+ 
+ 
+
+nrow(data_combined)
 ```
 
 ## Analysis
@@ -168,34 +179,36 @@ summary(best_sub)
 
 ```{r}
 # First Implement the Seed and split the Training and Testing Data
-set.seed(1)
+set.seed(12)
 #selected_cols <- c(2,10,11) # this received 61.25% with k =20
-selected_cols <- c(2,3,7, 10,11) # this received 61.87% with k = 31
-index <- sample(1:nrow(wine_filtered), 0.8 * nrow(wine_filtered))
+#selected_cols <- c(2,3,4,5, 7, 8, 9,10,11) # this received 61.87% with k = 31
+index <- sample(1:nrow(data_combined), 0.8 * nrow(data_combined))
 
-train_data <- wine_filtered[index, selected_cols]   # Features: columns 1 to 11
-test_data <- wine_filtered[-index, selected_cols]
+train_data <- data_combined[index, 1:11]   # Features: columns 1 to 11
+test_data <- data_combined[-index, 1:11]
 
-train_labels <- wine_filtered[index, 12]   # Target: column 12
-test_labels <- wine_filtered[-index, 12]
+cat("Number of training samples:", nrow(train_data), "\n")
+cat("Number of testing samples:", nrow(test_data), "\n")
 
-# Step 2: (Optional) Convert target to factor if doing classification
+train_labels <- data_combined[index, 12]   # Target: column 12
+test_labels <- data_combined[-index, 12]
+
 # The numbers are treated as categorical not to calculate the average from
 train_labels <- as.factor(train_labels)
 test_labels <- as.factor(test_labels)
+
 
 # Step 3: Train KNN with k = 2-60
 accuracy_list <- c()
 
 for (k in 2:60) {
   knn_pred <- knn(train = train_data, test = test_data, cl = train_labels, k = k)
-  acc <- sum(knn_pred == test_labels) / length(test_labels)
+  acc <- mean(knn_pred == test_labels)
   accuracy_list <- c(accuracy_list, acc)
 }
 
 # Find the best k
-best_k <- which.max(accuracy_list) + 1  # +1 because sequence started at k = 2
-best_acc <- max(accuracy_list)
+best_k <- k_values[which.max(accuracy_list)]
 
 cat("The Best k:", best_k, "\n")
 cat("The Best Accuracy:", round(best_acc, 4), "\n")
@@ -205,7 +218,9 @@ final_knn <- knn(train = train_data, test = test_data, cl = train_labels, k = be
 
 ```
 
-Get the optimize K
+## Model Evaluation
+
+### The K is optimized
 
 ```{r}
 k_values <- 1:60
@@ -218,31 +233,73 @@ plot(k_values, accuracies, type = "b", col = "blue", pch = 19,
 xlab = "K", ylab = "Accuracy", main = "Optimal K Selection")
 ```
 
-## Model Evaluation
-
-### The Accuracy of the Model
-
-```{r}
-# accuracy <- sum(knn_final == test_labels) / length(test_labels)
-# cat("Accuracy:", accuracy, "\n")
-```
+-   The plot illustrates that although the highest accuracy is achieved at k equal to 1, this is generally ignored in KNN as it is noise-sensitive and prone to overfitting. A strong local maximum in accuracy appears around k equal to 10, suggesting this is a more plausible choice. After this point, as k increases, accuracy gradually declines, indicating that larger neighborhoods reduce the model’s predictive accuracy. Therefore, intermediate values of k (between 5 and 15) offer a good compromise between capturing local structure and achieving generalization.
 
 ### The Confusion Matrix
 
 ```{r}
-# conf_matrix <- confusionMatrix(knn_final, test_labels)
-# print(conf_matrix)
+conf_matrix <- table(Predicted = final_knn, Actual = test_labels)
+
+
+conf_matrix_df <- as.data.frame(as.table(conf_matrix))
+
+ggplot(data = conf_matrix_df, aes(x = Predicted, y = Actual, fill = Freq)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), color = "black", size = 6) +
+  scale_fill_gradient(low = "white", high = "blue") +
+  theme_minimal() +
+  labs(x = "Predicted", y = "Actual", fill = "Frequency") +
+  theme(axis.text.x = element_text(hjust = 1))
 
 ```
 
-### Evaluate the ROC curve and ACU
+-   Based on the confusion matrix, the KNN model is moderately accurate with the majority of the correct predictions clustered around classes 5 and 6. Class 6 has the maximum true positive value (61), indicating that the model is most confident in classifying this class correctly; however, there is a large misclassification between neighboring classes: a majority of class 5 wines are forecast as class 6 (64), and the class 6 wines are largely forecast as 5 (24) or 7 (6). Class 7 forecasts are everywhere, and the model performs very badly with classes 4 and 8, correctly classifying none within these groups. This means that the model is most powerful at detecting common, central classes, but less sensitive to less common or edge-case classes. Overall, the model gives general trends regarding wine quality, but may be assisted by algorithms that provide improved performance on underrepresented classes.
+
+### Multiple of Class Precision, Recall, and F1 Score
 
 ```{r}
-# library(pROC)
-# roc_curve <- roc(test_labels, as.numeric(knn_final))
-# auc_value <- auc(roc_curve)
-# cat("AUC:", auc_value, "\n")
+conf_matrix <- confusionMatrix(final_knn, test_labels)
+# print(conf_matrix) # for debugging purposes
+
+cm_by_class <- conf_matrix$byClass
+
+if (is.null(dim(cm_by_class))) {
+  precision <- cm_by_class["Pos Pred Value"]
+  recall <- cm_by_class["Sensitivity"]
+  f1 <- 2 * (precision * recall) / (precision + recall)
+  metrics_df <- data.frame(
+    Class = levels(test_labels),
+    Precision = round(precision, 3),
+    Recall = round(recall, 3),
+    F1_Score = round(f1, 3)
+  )
+} else {
+  precision <- cm_by_class[, "Pos Pred Value"]
+  recall <- cm_by_class[, "Sensitivity"]
+  f1 <- 2 * (precision * recall) / (precision + recall)
+  metrics_df <- data.frame(
+    Class = rownames(cm_by_class),
+    Precision = round(precision, 3),
+    Recall = round(recall, 3),
+    F1_Score = round(f1, 3)
+  )
+}
+
+print(metrics_df)
+
 ```
+
+-   Class 4: The model did not predict any wines as quality 4. Precision and recall are both 0, indicating that it completely missed this class.
+
+-    Class 5: For class 5, the model is most accurate, with 65.3% precision and 68.1% recall, meaning it correctly identifies most wines with this quality.
+
+-   Class 6: Class 6 predictions are good with precision 56.5% and recall 67%, indicating moderate accuracy and good coverage.
+
+-   Class 7: The model performs badly on class 7 with only 50% accuracy and 29.4% recall, thus missing most of the true class 7 wines.
+
+-   Class 8: The model doesn't predict class 8 at all. Both precision and recall are 0, which means it completely fails to predict this class.
+
+-   delete this point is so i know i submitted the right draft on 4/11
 
 ## Conclusion & Summary
 
