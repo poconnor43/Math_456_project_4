@@ -6,7 +6,7 @@ editor: visual
 
 # Wine Quality Prediction with KNN
 
-### Authors: Preston O'Connor
+### Authors: Preston O'Connor, Anthony Yasan
 
 ### Date: 4/14/2025
 
@@ -14,7 +14,9 @@ editor: visual
 
 Our model uses the K nearest neighbor method to see the relation between chemical properties of different wines and the quality ratings of wine experts. The data set is composed of these chemical properties and quality ratings of northern Portuguese ‘Vinho Verde’ wines, which seems to have been gathered for a research paper similar to ours by Cortez et al. in 2009. The relationship between the chemical properties of wine and the “subjective” flavor, encompassing taste and smell, actually seems to be pretty complex. According to Shapin, who wrote a paper detailing how the American wine tasting language and process was born out of contributions from wine experts, producers and chemists, the flavor or quality is not only affected by flavorants and odorants, which often only have an impact on the smell, but also much less reliable prior experience and expectations. In fact the current language popularized by people like Maynard Amerine and his associates in the post-war period in itself influences how we perceive different flavors, and potentially thus the impact of the chemical flavorants on the quality. All of that is to say that the taste of wine is influenced not just by measurable chemicals but also social factors, especially when considering the professional wine tasting industry and a common language used by them. 
 
-	The packages we used are class, which has functions for categorization useful for KNN implementation, tidyverse for visualization functions, corrplot for correlation matrices, caret for KNN implementation, leaps for subset selection, and pROC for visualizing things.
+	The packages we used are class, which has functions for categorization useful for KNN implementation, tidyverse for visualization functions, corrplot for correlation matrices, caret for KNN implementation, leaps for subset selection, and pROC for testing cases.
+
+As for our results, the model seems to have been fairly successful at predicting wine quality when it was mid range, and more common. For the lower and higher ends of quality ratings the model performed worse, which can both be attributable to lower amounts of data for those categories and perhaps increasing deviation among those categories the further they get from an 'average' wine.
 
 ```{r}
 #libraries given in Step 1 of the slides
