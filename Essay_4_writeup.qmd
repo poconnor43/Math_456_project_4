@@ -157,7 +157,7 @@ corrplot(cor_matrix, method = "color", type = "upper",
 
 ## Analysis
 
-### Best Subset 
+### Best Subset
 
 ```{r}
 data_combined <- cbind(data_norm, quality = data_cleaned$quality)
@@ -176,6 +176,8 @@ nrow(data_combined)
 ## Analysis
 
 ### Train and Test Split with the optimized K
+
+-   We used an 80:20 ratio for our training and test sets to provide the model with a sizable amount of data to train on, while still maintaining a good mechanism for evaluating its performance. This yielded a training set of 906 and a testing set of 227. Using all the columns of the data set allows the KNN model to consider every feature that could potentially have an impact on wine quality, resulting in more accurate and informed predictions. Using the full set of variables, we are not in danger of leaving out any important information.
 
 ```{r}
 # First Implement the Seed and split the Training and Testing Data
@@ -197,11 +199,12 @@ test_labels <- data_combined[-index, 12]
 train_labels <- as.factor(train_labels)
 test_labels <- as.factor(test_labels)
 
+k_values <- 2:60
 
-# Step 3: Train KNN with k = 2-60
+# Train KNN with k = 2-60
 accuracy_list <- c()
 
-for (k in 2:60) {
+for (k in k_values) {
   knn_pred <- knn(train = train_data, test = test_data, cl = train_labels, k = k)
   acc <- mean(knn_pred == test_labels)
   accuracy_list <- c(accuracy_list, acc)
@@ -213,7 +216,7 @@ best_k <- k_values[which.max(accuracy_list)]
 cat("The Best k:", best_k, "\n")
 cat("The Best Accuracy:", round(best_acc, 4), "\n")
 
-# Optional: Final model with best k
+# Final model with best k
 final_knn <- knn(train = train_data, test = test_data, cl = train_labels, k = best_k)
 
 ```
@@ -223,6 +226,7 @@ final_knn <- knn(train = train_data, test = test_data, cl = train_labels, k = be
 ### The K is optimized
 
 ```{r}
+set.seed(13)
 k_values <- 1:60
 accuracies <- sapply(k_values, function(k) {
 pred <- knn(train_data, test_data, cl = train_labels, k = k)
@@ -233,7 +237,7 @@ plot(k_values, accuracies, type = "b", col = "blue", pch = 19,
 xlab = "K", ylab = "Accuracy", main = "Optimal K Selection")
 ```
 
--   The plot illustrates that although the highest accuracy is achieved at k equal to 1, this is generally ignored in KNN as it is noise-sensitive and prone to overfitting. A strong local maximum in accuracy appears around k equal to 10, suggesting this is a more plausible choice. After this point, as k increases, accuracy gradually declines, indicating that larger neighborhoods reduce the model’s predictive accuracy. Therefore, intermediate values of k (between 5 and 15) offer a good compromise between capturing local structure and achieving generalization.
+-   The plot illustrates the accuracy of the KNN model for different values of K, with optimal accuracy at low values of K, namely in the range of K equal to 5. As K increases, the model's accuracy has a tendency to fall, meaning larger neighborhoods reduce the model's ability to make correct predictions. Therefore, a lower value of K is more appropriate for this data set, sacrificing sensitivity to local trends for overall performance.
 
 ### The Confusion Matrix
 
@@ -291,7 +295,7 @@ print(metrics_df)
 
 -   Class 4: The model did not predict any wines as quality 4. Precision and recall are both 0, indicating that it completely missed this class.
 
--    Class 5: For class 5, the model is most accurate, with 65.3% precision and 68.1% recall, meaning it correctly identifies most wines with this quality.
+-   Class 5: For class 5, the model is most accurate, with 65.3% precision and 68.1% recall, meaning it correctly identifies most wines with this quality.
 
 -   Class 6: Class 6 predictions are good with precision 56.5% and recall 67%, indicating moderate accuracy and good coverage.
 
