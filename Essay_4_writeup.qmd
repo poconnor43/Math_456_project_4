@@ -12,6 +12,10 @@ editor: visual
 
 ## Introduction
 
+Our model uses the K nearest neighbor method to see the relation between chemical properties of different wines and the quality ratings of wine experts. The data set is composed of these chemical properties and quality ratings of northern Portuguese ‘Vinho Verde’ wines, which seems to have been gathered for a research paper similar to ours by Cortez et al. in 2009. The relationship between the chemical properties of wine and the “subjective” flavor, encompassing taste and smell, actually seems to be pretty complex. According to Shapin, who wrote a paper detailing how the American wine tasting language and process was born out of contributions from wine experts, producers and chemists, the flavor or quality is not only affected by flavorants and odorants, which often only have an impact on the smell, but also much less reliable prior experience and expectations. In fact the current language popularized by people like Maynard Amerine and his associates in the post-war period in itself influences how we perceive different flavors, and potentially thus the impact of the chemical flavorants on the quality. All of that is to say that the taste of wine is influenced not just by measurable chemicals but also social factors, especially when considering the professional wine tasting industry and a common language used by them. 
+
+	The packages we used are class, which has functions for categorization useful for KNN implementation, tidyverse for visualization functions, corrplot for correlation matrices, caret for KNN implementation, leaps for subset selection, and pROC for visualizing things.
+
 ```{r}
 #libraries given in Step 1 of the slides
 # install.packages("class") # For KNN
@@ -309,8 +313,6 @@ print(metrics_df)
 
 ## Sources
 
--   Source 1
+-   Shapin, Steven. “A Taste of Science: Making the Subjective Objective in the California Wine World.” Social Studies of Science 46, no. 3 (2016): 436–60. http://www.jstor.org/stable/26099849.
 
--   Source 2
-
--   Kaggle data set
+-   P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. Modeling wine preferences by data mining from physicochemical properties. In Decision Support Systems, Elsevier, 47(4):547-553, 2009.
