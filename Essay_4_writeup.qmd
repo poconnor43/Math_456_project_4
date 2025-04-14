@@ -220,6 +220,7 @@ for (k in k_values) {
 
 # Find the best k
 best_k <- k_values[which.max(accuracy_list)]
+best_acc <- max(accuracy_list)
 
 cat("The Best k:", best_k, "\n")
 cat("The Best Accuracy:", round(best_acc, 4), "\n")
