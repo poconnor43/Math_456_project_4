@@ -315,6 +315,9 @@ print(metrics_df)
 -   delete this point is so i know i submitted the right draft on 4/11
 
 ## Conclusion & Summary
+In this project, we used the K-Nearest Neighbors (KNN) algorithm to predict the quality of Portuguese 'Vinho Verde' wines based on a range of properties, including acidity, sugar content, and pH.
+After some data cleaning, normalization, and visualization, we trained and evaluated our model using an 80:20 training/test split. We determined the optimal values ​​for K via different techniques, and then tested our optimized model using a confusion matrix.
+Our model achieved reasonable accuracy in predicting mid-range wine qualities, especially for the more common quality ratings (classes 5 and 6). However, the model faced challenges with predicting extreme quality classes (classes 4, 7, and 8). This may be as a result of there being less representation for particularly low quality and high quality wines. Overall, the model is able to accurately suggest certain trends regarding wine quality, particularly for mid-range wines, but it needs bolstering via algorithms that can better incorporate underrepresented classes into the model. This model could also be improved by including additional variables that account for social, environmental, and historical factors that may impact wine quality.
 
 ## Sources
 
