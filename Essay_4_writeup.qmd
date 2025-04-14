@@ -6,7 +6,7 @@ editor: visual
 
 # Wine Quality Prediction with KNN
 
-### Authors: Preston O'Connor, Anthony Yasan
+### Authors: Preston O'Connor, Anthony Yasan, Matthew Jacob 
 
 ### Date: 4/14/2025
 
@@ -318,3 +318,5 @@ print(metrics_df)
 -   Shapin, Steven. “A Taste of Science: Making the Subjective Objective in the California Wine World.” Social Studies of Science 46, no. 3 (2016): 436–60. http://www.jstor.org/stable/26099849.
 
 -   P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. Modeling wine preferences by data mining from physicochemical properties. In Decision Support Systems, Elsevier, 47(4):547-553, 2009.
+
+-  Choudhury, P. (2020, June 26). Best way to learn KNN algorithm using R programming. Analytics Vidhya. https://www.analyticsvidhya.com/blog/2015/08/learning-concept-knn-algorithms-programming/ 
