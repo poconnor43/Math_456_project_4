@@ -17,13 +17,11 @@ header-includes:
 
 Our model uses the K nearest neighbor method to see the relation between chemical properties of different wines and the quality ratings of wine experts. The data set is composed of these chemical properties and quality ratings of northern Portuguese ‘Vinho Verde’ wines, which seems to have been gathered for a research paper similar to ours by Cortez et al. in 2009. The relationship between the chemical properties of wine and the “subjective” flavor, encompassing taste and smell, actually seems to be pretty complex. According to Shapin, who wrote a paper detailing how the American wine tasting language and process was born out of contributions from wine experts, producers and chemists, the flavor or quality is not only affected by flavorants and odorants, which often only have an impact on the smell, but also much less reliable prior experience and expectations. In fact the current language popularized by people like Maynard Amerine and his associates in the post-war period in itself influences how we perceive different flavors, and potentially thus the impact of the chemical flavorants on the quality. All of that is to say that the taste of wine is influenced not just by measurable chemicals but also social factors, especially when considering the professional wine tasting industry and a common language used by them. 
 
-```         
 The packages we used are class, which has functions for categorization useful for KNN implementation, tidyverse for visualization functions, corrplot for correlation matrices, caret for KNN implementation, leaps for subset selection, and pROC for testing cases.
-```
 
 As for our results, the model seems to have been fairly successful at predicting wine quality when it was mid range, and more common. For the lower and higher ends of quality ratings the model performed worse, which can both be attributable to lower amounts of data for those categories and perhaps increasing deviation among those categories the further they get from an 'average' wine.
 
-```{r}
+```{r, include=FALSE}
 #libraries given in Step 1 of the slides
 # install.packages("class") # For KNN
 # install.packages("tidyverse") # For visualization
@@ -81,18 +79,30 @@ The dataset contains 1599 observations (rows) and 12 variables (11 numeric input
 
 ### Data cleaning
 
+We will begin by visualizing potential outliers in our dataset using boxplots, grouping variables into two sets to efficiently display them. Next, we will apply an outlier removal function based on the **Interquartile Range (IQR) method**, identifying and filtering values that fall beyond 1.5 times the IQR to maintain statistical integrity. This function will be systematically applied to key variables, including **fixed acidity, volatile acidity, citric acid, residual sugar, chlorides, free sulfur dioxide, total sulfur dioxide, density, pH, sulphates, and alcohol**, ensuring that extreme values do not distort analysis. Finally, we will summarize the cleaned dataset and determine its new size, confirming that our filtering process retains a robust and reliable dataset for further analysis.
+
 ```{r}
-# Boxplots to detect outliers
+# Define units for each variable
+units <- c(
+  "fixed.acidity" = "g/L", "volatile.acidity" = "g/L", "citric.acid" = "g/L",
+  "residual.sugar" = "g/L", "chlorides" = "g/L", "free.sulfur.dioxide" = "mg/L",
+  "total.sulfur.dioxide" = "mg/L", "density" = "g/cm³", "pH" = "", 
+  "sulphates" = "g/L", "alcohol" = "%"
+)
+
+# Boxplots to detect outliers with units in labels
 par(mfrow = c(2, 3))
 for (i in 1:6) {
-  boxplot(data[[i]], main = names(data)[i])
+  boxplot(data[[i]], main = names(data)[i], ylab = paste0("(", units[names(data)[i]], ")"))
 }
 
-# Plot remaining 6 variables
+# Boxplots for the remaining variables
 par(mfrow = c(2, 3))
 for (i in 7:12) {
-  boxplot(data[[i]], main = names(data)[i])
+  boxplot(data[[i]], main = names(data)[i], ylab = paste0("(", units[names(data)[i]], ")"))
 }
+
+par(mfrow = c(1, 1))  # Reset layout
 
 par(mfrow = c(1, 1))  # Reset
 
@@ -314,8 +324,6 @@ print(metrics_df)
 -   Class 7: The model performs badly on class 7 with only 50% accuracy and 29.4% recall, thus missing most of the true class 7 wines.
 
 -   Class 8: The model doesn't predict class 8 at all. Both precision and recall are 0, which means it completely fails to predict this class.
-
--   delete this point is so i know i submitted the right draft on 4/11
 
 ## Conclusion & Summary
 
